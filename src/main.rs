@@ -1,24 +1,25 @@
-use std::process::Command;
 use std::fs::File;
-use std::io::Write;
+use std::process::Command;
 use std::process::Stdio;
 
-
 fn main() -> std::io::Result<()> {
-
     let mut stdout_f = File::create("stdout.log")?;
     let mut stderr_f = File::create("stderr.log")?;
-    let output = Command::new("./foo.py")
-                         .stdout(Stdio::piped())
-                         .stderr(Stdio::piped())
-                         .output()
-                         .expect("failed to execute process");
-    
-    println!("status: {}", output.status);
+    let mut child = Command::new("./foo.py")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("failed to execute process");
 
-    stdout_f.write_all(&output.stdout).unwrap();
-    stderr_f.write_all(&output.stderr).unwrap();
-    
-    assert!(output.status.success());
+    if let Some(mut out) = child.stdout.take() {
+        std::thread::spawn(move || {
+            std::io::copy(&mut out, &mut stdout_f).expect("Failed to copy stdout");
+        });
+    }
+    if let Some(mut err) = child.stderr.take() {
+        std::io::copy(&mut err, &mut stderr_f).expect("Failed to copy stderr");
+    }
+
+    assert!(child.wait().expect("Joined process succefully").success());
     Ok(())
 }

@@ -1,5 +1,5 @@
 [package]
 name = "teststdout" # the name of the package
-version = "0.1.0"    # the current version, obeying semver
+version = "1.0.0"    # the current version, obeying semver
 authors = ["rjesh.vaidheeswarran@sonos.com"]
 
